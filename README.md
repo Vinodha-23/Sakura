@@ -1,62 +1,74 @@
 # Sakura — Clinical Intelligence Platform
 
-AI-powered clinical intelligence for doctors: patient records, medication safety, insurance validation, and explainable AI.
+Sakura helps clinicians work faster with patient context in one place: records, medication safety alerts, insurance claims, document OCR, and an AI assistant that answers with citations from the chart.
 
-## Module status
+Everything in this demo uses **synthetic patient data** (no real PHI). The stack is free-tier friendly: Next.js, Postgres, Better Auth, and optional NVIDIA NIM for OCR and chat.
 
-Real free stack — no paid services, no SMS/email messaging:
+---
 
-| Layer | Choice |
-|--------|--------|
-| Auth | Better Auth (email/password) |
-| 2FA | TOTP authenticator app only |
-| Database | PostgreSQL (local Docker or Neon free) |
-| ORM | Drizzle |
-| Hosting (public) | Vercel Hobby (free) |
+## What you can try
 
-**Live (DB-backed):** Auth, Dashboard, Patients (CRUD + CSV import + notes + vitals + per-patient clinical viz dashboard), Clinical Alerts, Insurance claims, Documents & OCR (upload + free NVIDIA PaddleOCR on images/txt), AI Assistant (free NVIDIA text + vision, patient-scoped + browser chat memory), Notifications inbox, Settings (org / roles / API keys / audit), Search (patients/alerts/claims/documents).
+| Area | What it does |
+|------|----------------|
+| **Dashboard** | Today’s patients, open alerts, claim summary |
+| **Patients** | Create / edit charts, notes, vitals, CSV import, per-patient clinical charts |
+| **Clinical Alerts** | Medication safety flags — assign and resolve |
+| **Insurance** | Claims lifecycle (pending → review → approved / rejected) with missing-doc reasons |
+| **Documents** | Upload images or text; free NVIDIA OCR extracts text and clinical entities |
+| **AI Assistant** | Ask questions with live chart context; open from a patient to stay scoped to that chart |
+| **Knowledge Graph** | Explore relationships between conditions, meds, and patients (preview) |
+| **Notifications** | Persisted inbox — mark read / archive |
+| **Settings** | Org profile, roles, API keys, audit log |
 
-**Preview / mock UI:** Knowledge Graph (sample + patient-linked from conditions/meds), Analytics, Settings appearance & integration preferences (not persisted yet).
+**Still preview UI (not fully wired):** Analytics charts, Settings appearance & integrations preferences.
 
-## Quick start (local, free)
+---
 
-### Prerequisites
+## Quick start
 
-- Node.js 18+ and npm
-- One Postgres option: **Docker Desktop** (local) **or** a free **Neon** account
+### You need
 
-### 1. Install
+- [Node.js](https://nodejs.org/) 18+
+- Postgres via [Docker Desktop](https://www.docker.com/products/docker-desktop/) **or** a free [Neon](https://neon.tech) database
+- (Optional) a free [NVIDIA Build](https://build.nvidia.com) API key for OCR and the AI assistant
+
+### 1. Clone and install
 
 ```bash
+git clone https://github.com/Vinodha-23/Sakura.git
+cd Sakura
 npm install
 ```
 
-### 2. Environment
-
-Copy `.env.example` → `.env.local` and fill in your own values. `.env.local` is git-ignored and never committed.
+### 2. Configure environment
 
 ```bash
-cp .env.example .env.local   # PowerShell: Copy-Item .env.example .env.local
+cp .env.example .env.local
+# Windows PowerShell: Copy-Item .env.example .env.local
 ```
 
-Generate a strong `BETTER_AUTH_SECRET`:
+Edit `.env.local`:
+
+```env
+DATABASE_URL="postgresql://sakura:sakura@localhost:5432/sakura"
+BETTER_AUTH_SECRET="paste-a-long-random-secret-here"
+BETTER_AUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+DEMO_MODE="true"
+NVIDIA_API_KEY=""   # optional — get free at https://build.nvidia.com
+```
+
+Generate a secret:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-```env
-DATABASE_URL="postgresql://sakura:sakura@localhost:5432/sakura"
-BETTER_AUTH_SECRET="long-random-secret"
-BETTER_AUTH_URL="http://localhost:3000"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-DEMO_MODE="true"
-NVIDIA_API_KEY="nvapi-..."   # optional — free OCR on image uploads (build.nvidia.com)
-```
+Without `NVIDIA_API_KEY`, the rest of the app still works — OCR and AI will ask you to add a key when you use them.
 
-### 3. Database
+### 3. Start the database and seed demo data
 
-**Option A — Docker (recommended for local):**
+**Local Docker (recommended):**
 
 ```bash
 # Start Docker Desktop first
@@ -64,114 +76,78 @@ npm run db:up
 npm run db:setup
 ```
 
-**Option B — Neon free cloud Postgres:**
+**Or Neon cloud Postgres:** put your Neon connection string in `DATABASE_URL`, then run `npm run db:setup`.
 
-1. Create a project at https://neon.tech (free)
-2. Paste the connection string into `DATABASE_URL` in `.env.local`
-3. Run:
+### 4. Run
 
 ```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) and sign in:
+
+| | |
+|--|--|
+| **Email** | `sarah.chen@memorial-hospital.org` |
+| **Password** | `SakuraDemo2026!` |
+
+2FA is off by default. You can enable an authenticator app later under **Profile → Security**.
+
+---
+
+## Suggested walkthrough
+
+1. **Dashboard** — see seeded patients and alerts at a glance.
+2. **Patients** — open a chart → **Dashboard** tab for vitals/alerts/claims visualizations → try **AI Assistant** (stays scoped to that patient).
+3. **Clinical Alerts** — open a drug-interaction alert and resolve it.
+4. **Insurance** — open a rejected claim to see why (missing documents / corrections).
+5. **Documents** — upload a PNG/JPG clinical note or receipt; with an NVIDIA key, OCR fills in text and entities.
+6. **Patients → Import CSV** — load more synthetic patients from the sample file.
+
+---
+
+## Tech stack
+
+| Layer | Choice |
+|--------|--------|
+| App | Next.js 15 (App Router) + React 19 |
+| Auth | Better Auth (email/password + optional TOTP) |
+| Database | PostgreSQL + Drizzle ORM |
+| AI / OCR | NVIDIA NIM (free preview endpoints) |
+| Charts | Recharts |
+
+---
+
+## Useful commands
+
+```bash
+npm run dev              # start the app
+npm run db:up            # start local Postgres (Docker)
+npm run db:down          # stop local Postgres
+npm run db:setup         # apply schema + seed demo data
+npm run db:import-sample # import sample Synthea-style CSV
+```
+
+---
+
+## Deploy (optional)
+
+A common free setup is **Vercel + Neon**:
+
+1. Create a Neon database and copy `DATABASE_URL`.
+2. Import this repo on [vercel.com](https://vercel.com).
+3. Set env vars: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL` (your `https://….vercel.app` URL), `DEMO_MODE=true`, and optionally `NVIDIA_API_KEY`.
+4. From your machine, seed once against Neon:
+
+```bash
+# with DATABASE_URL pointing at Neon in .env.local
 npm run db:setup
 ```
 
-### 4. Run the app
+---
 
-```bash
-npm run dev
-```
+## Notes
 
-Open http://localhost:3000
-
-### Demo login
-
-```
-Email:    sarah.chen@memorial-hospital.org
-Password: SakuraDemo2026!
-```
-
-- Uses **synthetic data only** — no real patient information.
-- Override the seeded account by setting `SEED_DEMO_EMAIL` / `SEED_DEMO_PASSWORD` before running `npm run db:seed`.
-- 2FA is **off** by default so you can enter immediately.
-- Enable TOTP later from **Profile → Security** (Google Authenticator / Authy / 1Password).
-- Forgot password uses **on-screen temp password** when `DEMO_MODE=true` (no email).
-
-## Auth screens
-
-| Route | Behavior |
-|--------|----------|
-| `/login` | Real Better Auth sign-in |
-| `/verify-2fa` | TOTP / backup code after password if 2FA enabled |
-| `/forgot-password` | Demo reset (shows temp password) |
-| `/reset-password` | UI (use forgot-password for demo reset) |
-| `/session-timeout` | Expired session message |
-| `/unauthorized` | Access denied |
-| `/dashboard` | Live data from Postgres |
-
-## Deploy publicly for free (Vercel + Neon)
-
-1. Push this repo to GitHub
-2. Create free Neon DB → copy `DATABASE_URL`
-3. Import project on https://vercel.com (Hobby)
-4. Set env vars:
-   - `DATABASE_URL`
-   - `BETTER_AUTH_SECRET`
-   - `BETTER_AUTH_URL` = your Vercel URL (`https://….vercel.app`)
-   - `NEXT_PUBLIC_APP_URL` = same URL
-   - `DEMO_MODE=true`
-5. Deploy, then run seed once locally against Neon:
-
-```bash
-DATABASE_URL="postgresql://…neon…" npm run db:push
-DATABASE_URL="postgresql://…neon…" npm run db:seed
-```
-
-(Or add a one-off Vercel deploy hook / run seed from your machine against Neon.)
-
-## Scripts
-
-```bash
-npm run db:up      # docker compose up -d
-npm run db:down    # docker compose down
-npm run db:push    # apply schema
-npm run db:seed    # demo user + dashboard data
-npm run db:setup   # push + seed
-npm run dev
-```
-
-## Patient CSV import (synthetic / free)
-
-Sakura accepts a **Synthea-style CSV** — no real PHI.
-
-1. Open **Patients → Import CSV**
-2. Click **Import sample (15 patients)** or download `/samples/patients-sample.csv`
-3. Sakura upserts by MRN and auto-creates medication safety alerts (e.g. Warfarin + Aspirin)
-
-CLI:
-
-```bash
-npm run db:import-sample
-```
-
-Required columns: `mrn`, `name`, `date_of_birth`  
-Optional: `medications`, `conditions`, `allergies`, `risk_level`, `last_visit`, vitals (`blood_pressure`, `heart_rate`, `temperature`, `weight`, `height`, `oxygen_saturation`), etc.
-
-## Out of scope (Module 1)
-
-- SMS / email OTPs (Twilio, Resend, etc.)
-- Clerk / Auth0 / Firebase Auth paid plans
-- Paid Redis or AI model APIs
-
-## App map
-
-| Area | Status |
-|------|--------|
-| Dashboard | Live aggregates from Postgres |
-| Patients | Live list/create/edit/delete, notes, vitals, CSV import |
-| Clinical Alerts | Live resolve/assign |
-| Insurance | Live claim status updates |
-| Documents | Live upload/list/detail; OCR via free NVIDIA PaddleOCR (images/txt) |
-| AI Assistant | Free NVIDIA text + vision with live clinical context + citations |
-| Knowledge Graph | Sample default; patient-linked via `?patientId=` |
-| Notifications | Persisted inbox (read / archive) |
-| Settings | Live org profile, roles, API keys, audit logs |
-| Analytics | Mostly preview |
+- Demo patients and claims are **synthetic** — safe for demos and screenshots.
+- Document OCR works best with **images** (PNG/JPG) or plain **.txt**. PDFs are stored but not OCR’d on the free path yet.
+- The AI assistant remembers chat in the browser (per patient scope) so switching tabs does not wipe the conversation.
