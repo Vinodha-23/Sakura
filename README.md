@@ -23,6 +23,8 @@ Everything in this demo uses **synthetic patient data** (no real PHI). The stack
 **Still preview UI (not fully wired):** Analytics charts, Settings appearance & integrations preferences.
 
 ---
+<img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/c371df46-8a4d-441b-a2b2-06ec60498155" />
+
 
 ## Quick start
 
