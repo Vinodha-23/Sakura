@@ -16,25 +16,7 @@ Real free stack — no paid services, no SMS/email messaging:
 
 **Live (DB-backed):** Auth, Dashboard, Patients (CRUD + CSV import + notes + vitals + per-patient clinical viz dashboard), Clinical Alerts, Insurance claims, Documents & OCR (upload + free NVIDIA PaddleOCR on images/txt), AI Assistant (free NVIDIA text + vision, patient-scoped + browser chat memory), Notifications inbox, Settings (org / roles / API keys / audit), Search (patients/alerts/claims/documents).
 
-**Preview / mock UI:** Knowledge Graph (sample + patient-linked from conditions/meds), Analytics, Settings theme/integrations channel prefs.
-
-## Is it safe to push to GitHub (public)?
-
-Yes — this repo is set up to keep secrets out of Git:
-
-- **No real secrets are committed.** All keys live in `.env.local`, which is git-ignored. Only `.env.example` (placeholders) is tracked.
-- **`.gitignore` blocks** `.env*` files, `*.pem`/`*.key`, `credentials.json`/`secrets.json`, and local dev scratch (NVIDIA experiment dumps, OCR output images under `scripts/`).
-- **No hardcoded API keys.** The NVIDIA key is read from `process.env.NVIDIA_API_KEY` everywhere; the smoke-test scripts also read it from the environment.
-- **The demo login is intentional, not a secret.** `sarah.chen@memorial-hospital.org` / `SakuraDemo2026!` only exists in your local seeded database and uses **synthetic (fake) patient data — no real PHI**. You can override it via `SEED_DEMO_EMAIL` / `SEED_DEMO_PASSWORD` before seeding.
-
-**Before your first push, sanity-check that nothing sensitive is staged:**
-
-```bash
-git status                       # .env.local should NOT appear
-git ls-files | grep -i env       # should only show .env.example
-```
-
-If you ever committed a real key by accident, rotate it (get a new one at build.nvidia.com) and scrub history before pushing.
+**Preview / mock UI:** Knowledge Graph (sample + patient-linked from conditions/meds), Analytics, Settings appearance & integration preferences (not persisted yet).
 
 ## Quick start (local, free)
 
